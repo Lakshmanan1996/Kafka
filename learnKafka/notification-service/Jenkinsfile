@@ -33,7 +33,7 @@ pipeline {
 
             steps {
                 unstash 'source-code'
-                dir('notification-service'){
+                dir('learnKafka/notification-service'){
                     sh 'mvn clean install -DskipTests'
                 }
             }
