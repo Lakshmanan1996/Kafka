@@ -16,7 +16,7 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent { label 'workernode1' }
+            
             steps {
                 cleanWs()
                 checkout scm
@@ -26,7 +26,7 @@ pipeline {
 
         /* ===================== Build Maven Stage ===================== */
         stage('Build') {
-            agent { label 'workernode2'}
+            
             tools {
                 maven 'maven'
             }
@@ -51,14 +51,14 @@ pipeline {
         }
 
         stage('Trivy Scan') {
-            agent { label 'workernode3' }
+            
             steps {
                 sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${IMAGE_NAME}:${BUILD_NUMBER}"
             }
         }
 
         stage('Push to DockerHub') {
-            agent { label 'workernode3' }
+            
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
