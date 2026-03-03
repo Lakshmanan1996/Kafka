@@ -33,7 +33,9 @@ pipeline {
 
             steps {
                 unstash 'source-code'
-                sh 'mvn clean install -DskipTests'
+                dir('notification-service'){
+                    sh 'mvn clean install -DskipTests'
+                }
             }
         }
 
