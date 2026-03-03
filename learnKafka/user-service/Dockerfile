@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY pom.xml .
 
-RUN mvn dependency:go-oflfine
+RUN mvn dependency:go-offline
 
 COPY src ./src
 
