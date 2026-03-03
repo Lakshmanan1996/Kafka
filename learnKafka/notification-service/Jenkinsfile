@@ -1,0 +1,73 @@
+pipeline {
+    agent none
+
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    environment {
+        SERVICE_NAME = "notification-service"
+        DOCKERHUB_USER = "lakshvar96"
+        IMAGE_NAME = "${DOCKERHUB_USER}/${SERVICE_NAME}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            agent { label 'workernode1' }
+            steps {
+                cleanWs()
+                checkout scm
+                stash name: 'source-code', includes: '**/*'
+            }
+        }
+
+        stage('Docker Build') {
+            agent { label 'workernode3' }
+            steps {
+                cleanWs()
+                unstash 'source-code'
+                dir("${SERVICE_NAME}") {
+                    sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
+                }
+            }
+        }
+
+        stage('Trivy Scan') {
+            agent { label 'workernode3' }
+            steps {
+                sh "trivy image --exit-code 0 --severity HIGH,CRITICAL ${IMAGE_NAME}:${BUILD_NUMBER}"
+            }
+        }
+
+        stage('Push to DockerHub') {
+            agent { label 'workernode3' }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ ${SERVICE_NAME} Pipeline SUCCESS"
+        }
+        failure {
+            echo "❌ ${SERVICE_NAME} Pipeline FAILED"
+        }
+    }
+}
+
+
+
