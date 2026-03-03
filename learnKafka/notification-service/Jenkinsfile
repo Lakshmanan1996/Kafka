@@ -24,6 +24,19 @@ pipeline {
             }
         }
 
+        /* ===================== Build Maven Stage ===================== */
+        stage('Build') {
+            agent { label 'workernode2'}
+            tools {
+                maven 'maven'
+            }
+
+            steps {
+                unstash 'source-code'
+                sh 'mvn clean install -DskipTests'
+            }
+        }
+
         stage('Docker Build') {
             agent { label 'workernode3' }
             steps {
